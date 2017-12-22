@@ -1,0 +1,69 @@
+.DataSheet {
+  width: 100%;
+  height: 100%;
+  background: #eee;
+
+  /* display: flex; */
+
+  border: 1px solid black;
+
+  /* flex-direction: column; */
+
+  overflow: hidden;
+  /* display: grid; */
+  position: relative;
+}
+
+.DataSheet.isScrolling * {
+  pointer-events: none;
+}
+
+.Row {
+  display: flex;
+  /* flex: 1; */
+  flex-shrink: 0;
+  border-bottom: 1px solid #ccc;
+}
+
+.CellContainer {
+  position: absolute;
+  width: 100px;
+  height: 25px;
+}
+
+.Cell {
+  padding: 0.125rem 0.25rem;
+  font-size: 14px;
+  height: 25px;
+  width: 100%;
+  border-right: 1px solid #ccc;
+  border-bottom: 1px solid #ccc;
+  align-items: center;
+  display: flex;
+  box-sizing: border-box;
+  background: white;
+}
+
+.Cell.selected {
+  padding: 0;
+}
+
+.Cell .selected {
+  font-size: 14px;
+  -webkit-appearance: none;
+  font-family: sans-serif;
+  border: 1px solid blue;
+  display: flex;
+  height: 26px;
+  min-width: 101px;
+  top: 0px;
+  left: -1px;
+  position: relative;
+  z-index: 1;
+  padding: 0.25rem 0.25rem;
+  box-sizing: border-box;
+}
+
+/* .Cell:hover {
+  outline: 1px solid blue;
+} */
