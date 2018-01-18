@@ -4,9 +4,14 @@
   "private": true,
   "dependencies": {
     "classnames": "^2.2.5",
+    "hot-formula-parser": "^2.3.1",
+    "lodash.difference": "^4.5.0",
+    "lodash.eq": "^4.0.0",
+    "lodash.uniq": "^4.5.0",
     "react": "^16.2.0",
     "react-dom": "^16.2.0",
-    "react-scripts": "1.0.17"
+    "react-scripts": "1.0.17",
+    "topsort": "^0.0.2"
   },
   "scripts": {
     "start": "react-scripts start",

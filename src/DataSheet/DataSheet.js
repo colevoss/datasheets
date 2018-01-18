@@ -3,7 +3,18 @@ import Cell from './Cell';
 import classnames from 'classnames';
 import * as utils from './utils';
 import './DataSheet.css';
-import data from '../arr.js';
+import rawData from '../arr.js';
+import { transformData } from './transformData';
+import DataSource from './DataSource';
+
+const varReg = /([$])?([A-Za-z]+)([$])?([0-9]+)/g;
+
+const data = [
+  [null, null],
+  [null, { forumla: null, value: '156', error: null }],
+  [null, { formula: '=B2', value: '156', error: null }],
+  [null, { formula: '=B2 + MULTIPLY(B3, 2)', value: 468, error: null }],
+];
 
 const datasheetClassnames = isScrolling =>
   classnames('DataSheet', {
@@ -23,6 +34,8 @@ const ARROW_KEY_CODES_LIST = Object.keys(ARROW_KEY_CODES).map(
 
 const TAB_KEY_CODE = 9;
 
+const dataSource = new DataSource(data);
+
 export default class DataSheet extends React.Component {
   state = {
     isScrolling: false,
@@ -32,6 +45,8 @@ export default class DataSheet extends React.Component {
     columnOffset: 0,
     width: 0,
     height: 0,
+    visibleRows: 0,
+    visibleColumns: 0,
   };
 
   scroll = {
@@ -72,6 +87,8 @@ export default class DataSheet extends React.Component {
       width,
       height,
       isSelectedCellEditing,
+      visibleColumns,
+      visibleRows,
     } = state;
 
     this.cells = utils.cellRange({
@@ -83,8 +100,8 @@ export default class DataSheet extends React.Component {
       tableWidth: width,
       cellRenderer: this.cellRenderer,
       styleCache: this.styleCache,
-      rowCount: data.length,
-      columnCount: data[0].length,
+      rowCount: dataSource.rowCount(),
+      columnCount: dataSource.columnCount(),
       selectedCell,
     });
   }
@@ -105,28 +122,41 @@ export default class DataSheet extends React.Component {
     window.removeEventListener('resize', this.onResize);
   }
 
+  onFinishEditing = (val, col, row) => {
+    let cell;
+
+    dataSource.updateCell(row, col, val);
+
+    this.forceUpdate();
+  };
+
   onResize = () => {
+    const width = this.d.offsetWidth;
+    const height = this.d.offsetHeight;
     this.setState(
       () => ({
-        width: this.d.offsetWidth,
-        height: this.d.offsetHeight,
+        width,
+        height,
       }),
       () => {
         this.maxScrollX = utils.maxHorizontalScroll(
           this.state.width,
-          data[0].length
+          dataSource.columnCount()
         );
         this.maxScrollY = utils.maxVerticalScroll(
           this.state.height,
-          data.length
+          dataSource.columnCount()
         );
       }
     );
   };
 
   onKeyDown = e => {
+    const { isSelectedCellEditing } = this.state;
+
     if (
-      ARROW_KEY_CODES_LIST.indexOf(e.keyCode) > -1 ||
+      (ARROW_KEY_CODES_LIST.indexOf(e.keyCode) > -1 &&
+        !isSelectedCellEditing) ||
       e.keyCode === TAB_KEY_CODE
     ) {
       this.handleArrowNav(e);
@@ -135,13 +165,16 @@ export default class DataSheet extends React.Component {
 
     // ENTER
     if (e.keyCode === 13) {
-      const { isSelectedCellEditing } = this.state;
-
       !isSelectedCellEditing
         ? this.setIsSelectedCellEditing(!isSelectedCellEditing)
         : this.handleArrowNav(e);
 
       return;
+    }
+
+    if (e.key.length === 1) {
+      !isSelectedCellEditing &&
+        this.setIsSelectedCellEditing(!isSelectedCellEditing);
     }
   };
 
@@ -189,15 +222,6 @@ export default class DataSheet extends React.Component {
 
     this.selectCell(...newSelectedCoords);
   };
-
-  // updateCellData = (i, j, data) => {
-  //   const row = this.state.data[i];
-  //   const newRow = [...row.slice(0, j), data, ...row.slice(j + 1, row.length)];
-
-  //   this.setState({
-  //     data: [...this.state.data.slice(0, i), newRow, ...this.state.data.slice(i + 1, this.state.data.length)],
-  //   });
-  // };
 
   generateNewScrollState(delta) {
     const adjustX = Math.abs(delta.x) >= Math.abs(delta.y);
@@ -283,7 +307,7 @@ export default class DataSheet extends React.Component {
     isSelected,
     isSelectedCellEditing,
   }) => {
-    const val = data[rowIndex][columnIndex];
+    const val = dataSource.getCellValue(rowIndex, columnIndex);
 
     return (
       <div
@@ -296,6 +320,9 @@ export default class DataSheet extends React.Component {
           value={val}
           isSelected={isSelected}
           isEditing={isSelectedCellEditing}
+          onFinishEditing={this.onFinishEditing}
+          col={columnIndex}
+          row={rowIndex}
         />
       </div>
     );
